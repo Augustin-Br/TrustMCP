@@ -1,0 +1,56 @@
+services:
+  spire-server:
+    image: ghcr.io/spiffe/spire-server:1.8.7
+    command: ["-config", "/opt/spire/conf/server/server.conf"]
+    volumes:
+      - ./infrastructure/server.conf:/opt/spire/conf/server/server.conf:ro
+      - spire-server-data:/opt/spire/data
+    ports:
+      - "8081:8081"
+
+  spire-agent:
+    image: ghcr.io/spiffe/spire-agent:1.8.7
+    pid: "host"
+    user: "0"
+    command: ["-config", "/opt/spire/conf/agent/agent.conf"]
+    depends_on:
+      - spire-server
+    volumes:
+      - ./infrastructure/agent.conf:/opt/spire/conf/agent/agent.conf:ro
+      - spire-agent-data:/opt/spire/data
+      - spire-socket:/tmp/spire-agent/public
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  
+  trustmcp-server:
+    build: 
+      context: ./trustmcp_server
+    labels:
+      - "app=trustmcp_server"
+    environment:
+      - SPIFFE_ENDPOINT_SOCKET=unix:///tmp/spire-agent/public/api.sock
+    volumes:
+      - ./trustmcp_server:/app:ro
+      - spire-socket:/tmp/spire-agent/public:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      - spire-agent
+
+  ai-client:
+    build: 
+      context: ./ai_client
+    labels:
+      - "app=ai_client"
+    environment:
+      - SPIFFE_ENDPOINT_SOCKET=unix:///tmp/spire-agent/public/api.sock
+    volumes:
+      - ./ai_client:/app:ro
+      - spire-socket:/tmp/spire-agent/public:ro
+    depends_on:
+      - trustmcp-server
+
+volumes:
+  spire-server-data:
+  spire-agent-data:
+  spire-socket:
