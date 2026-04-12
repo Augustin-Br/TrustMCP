@@ -104,14 +104,12 @@ async def app(scope, receive, send):
 
     path = scope.get("path", "")
 
-    # Route 1 : L'ouverture du Tunnel SSE
     if path == "/sse":
         print("[SERVER] New SSE Connection established.", flush=True)
         async with transport.connect_sse(scope, receive, send) as streams:
             await mcp_server.run(streams[0], streams[1], mcp_server.create_initialization_options())
         return
 
-    # Route 2 : La réception des requêtes d'outils
     elif path == "/messages/":
         body = b""
         more_body = True
@@ -143,7 +141,7 @@ async def app(scope, receive, send):
 
             if tool_name not in allowed_tools:
                 print(f"[RBAC BLOCK] Access denied: {spiffe_id} attempted to use '{tool_name}'", flush=True)
-                # JEDI MIND TRICK : On force une demande invalide
+                # Payload Mutation (Graceful Degradation) : Rewriting the tool name to force the MCP execution engine to return a clean 'Unknown Tool' error via the SSE stream, preventing protocol crash
                 payload["params"]["name"] = f"UNAUTHORIZED_ACCESS_TO_{tool_name}"
                 body = json.dumps(payload).encode("utf-8")
                 messages = [{"type": "http.request", "body": body, "more_body": False}]
@@ -157,7 +155,6 @@ async def app(scope, receive, send):
 
         return await transport.handle_post_message(scope, new_receive, send)
 
-    # Route par défaut (Laisse FastAPI gérer le reste s'il y a d'autres endpoints)
     return await fastapi_app(scope, receive, send)
 
 # --- 4. SERVER STARTUP WITH DYNAMIC SVID ---

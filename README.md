@@ -12,7 +12,7 @@ This project solves one of the critical flaws in current MCP servers: the lack o
 
 - **Strict mTLS:** The MCP server rejects any connection that does not present a valid client certificate signed by the SPIRE authority.
 
-- **Dynamic RBAC Middleware:** A pure ASGI proxy intercepts JSON-RPC requests. It verifies the client's identity (SPIFFE ID) and firmly blocks unauthorized tools using a "Jedi Mind Trick" payload rewriting technique to prevent server crashes.
+- **Dynamic RBAC Middleware:** A pure ASGI proxy intercepts JSON-RPC requests. It verifies the client's identity (SPIFFE ID) and firmly blocks unauthorized tools using **payload mutation (graceful degradation)** to rewrite the request, ensuring the MCP engine returns a clean error without crashing the SSE stream.
 
 - **Hot-Reloading Security Policies:** Access rights are managed via an external `rbac_policy.yaml` file that updates in real-time without requiring a server restart.
 
