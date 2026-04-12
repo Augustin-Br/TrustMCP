@@ -44,6 +44,7 @@ services:
       - "app=ai_client"
     environment:
       - SPIFFE_ENDPOINT_SOCKET=unix:///tmp/spire-agent/public/api.sock
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - ./ai_client:/app:ro
       - spire-socket:/tmp/spire-agent/public:ro

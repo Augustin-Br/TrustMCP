@@ -1,0 +1,6 @@
+spiffe://blog.local/agent_reader:
+  - read_sqlite
+
+spiffe://blog.local/agent_admin:
+  - read_sqlite
+  - drop_table
